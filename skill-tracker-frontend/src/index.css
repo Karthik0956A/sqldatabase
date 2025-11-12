@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs;
+}
+
+@utility card {
+  @apply rounded-2xl border bg-white p-4 shadow-sm;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium hover:shadow;
+}
+
+@utility input {
+  @apply w-full rounded-lg border px-3 py-2 outline-none focus:ring focus:ring-indigo-100;
+}
+
+@utility select {
+  @apply w-full rounded-lg border px-3 py-2 outline-none focus:ring focus:ring-indigo-100;
+}
