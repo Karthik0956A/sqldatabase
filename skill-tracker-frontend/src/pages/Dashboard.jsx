@@ -70,7 +70,7 @@ export default function Dashboard() {
 
   const onSaveSkill = async (payload) => {
     try {
-      if (editing) await updateSkill(editing._id, payload);
+      if (editing) await updateSkill(editing.id, payload);
       else await createSkill(payload);
       setOpenSkillForm(false);
       setEditing(null);
@@ -91,7 +91,7 @@ export default function Dashboard() {
   };
 
   const onSaveTime = async ({ minutes, note, at }) => {
-    await addTime(timeSkill._id, { minutes, note, at });
+    await addTime(timeSkill.id, { minutes, note, at });
     setOpenTimeForm(false);
     setTimeSkill(null);
     await refresh();
@@ -127,7 +127,7 @@ export default function Dashboard() {
             <div className="grid gap-3">
               {lane.items.map((s) => (
                 <SkillCard
-                  key={s._id}
+                  key={s.id}
                   skill={s}
                   onAddTime={onAddTimeOpen}
                   onEdit={(sk) => {
@@ -158,7 +158,7 @@ export default function Dashboard() {
             <div className="grid gap-3">
               {group.items.map((s) => (
                 <SkillCard
-                  key={s._id}
+                  key={s.id}
                   skill={s}
                   onAddTime={onAddTimeOpen}
                   onEdit={(sk) => {
@@ -188,7 +188,7 @@ export default function Dashboard() {
             <div className="grid gap-3">
               {(map.get(String(n)) || []).map((s) => (
                 <SkillCard
-                  key={s._id}
+                  key={s.id}
                   skill={s}
                   onAddTime={onAddTimeOpen}
                   onEdit={(sk) => {
@@ -231,7 +231,7 @@ export default function Dashboard() {
             <div className="grid gap-3">
               {items.map((s) => (
                 <SkillCard
-                  key={s._id}
+                  key={s.id}
                   skill={s}
                   onAddTime={onAddTimeOpen}
                   onEdit={(sk) => {
@@ -267,7 +267,7 @@ export default function Dashboard() {
           </thead>
           <tbody>
             {summary.map((row) => (
-              <tr key={row._id} className="border-t">
+              <tr key={row.id} className="border-t">
                 <td className="py-2 pr-4">{row.title}</td>
                 <td className="py-2 pr-4">{row.category}</td>
                 <td className="py-2 pr-4">{row.status}</td>

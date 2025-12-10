@@ -11,7 +11,7 @@ export const requireAuth = async (req, res, next) => {
     req.userId = decoded.id;
 
     // optional: attach user object if needed
-    // req.user = await User.findById(req.userId).select("_id name email");
+    // req.user = await User.findByPk(req.userId, { attributes: ["id", "name", "email"] });
 
     next();
   } catch {

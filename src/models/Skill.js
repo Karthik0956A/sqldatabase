@@ -1,30 +1,91 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
+import User from "./User.js";
 
-const SkillSchema = new mongoose.Schema(
-  {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-
-    title: { type: String, required: true, trim: true },
-    category: { type: String, required: true, trim: true },    // user-defined (Backend/Mobile/etc.)
-    status: { type: String, required: true, trim: true, default: "To Start", index: true }, // “In Progress”, “Mastered”, etc.
-
-    confidence: { type: Number, min: 1, max: 5, default: 1, index: true },
-    tags: [{ type: String, trim: true, index: true }],
-
-    description: String,
-    startedAt: Date,
-    nextReviewAt: Date,
-
-    minutesTotal: { type: Number, default: 0 }, // denormalized sum of time entries
-    minutesTarget: { type: Number, default: 0 }
+const Skill = sequelize.define("Skill", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  { timestamps: true }
-);
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "users",
+      key: "id"
+    },
+    onDelete: "CASCADE"
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
+  },
+  status: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "To Start",
+    validate: {
+      notEmpty: true
+    }
+  },
+  confidence: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    validate: {
+      min: 1,
+      max: 5
+    }
+  },
+  tags: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  startedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  nextReviewAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  minutesTotal: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  minutesTarget: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  }
+}, {
+  timestamps: true,
+  tableName: "skills",
+  indexes: [
+    { fields: ["userId"] },
+    { fields: ["userId", "category"] },
+    { fields: ["userId", "status"] },
+    { fields: ["userId", "confidence"] },
+    { fields: ["status"] },
+    { fields: ["confidence"] }
+  ]
+});
 
-// helpful compound indexes for fast filtering/grouping
-SkillSchema.index({ userId: 1, category: 1 });
-SkillSchema.index({ userId: 1, status: 1 });
-SkillSchema.index({ userId: 1, confidence: 1 });
-SkillSchema.index({ userId: 1, tags: 1 });
+// Define associations
+Skill.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasMany(Skill, { foreignKey: "userId", as: "skills" });
 
-export default mongoose.model("Skill", SkillSchema);
+export default Skill;

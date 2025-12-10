@@ -1,50 +1,97 @@
 import Skill from "../models/Skill.js";
 import TimeEntry from "../models/TimeEntry.js";
-import mongoose from "mongoose";
+import sequelize from "../config/db.js";
+import { Op } from "sequelize";
 
 export const addTime = async (req, res) => {
-  const skill = await Skill.findOne({ _id: req.params.skillId, userId: req.userId });
-  if (!skill) return res.sendStatus(404);
+  try {
+    const skill = await Skill.findOne({
+      where: { id: req.params.skillId, userId: req.userId }
+    });
+    
+    if (!skill) {
+      return res.sendStatus(404);
+    }
 
-  const { minutes, note, at } = req.body;
-  const entry = await TimeEntry.create({
-    userId: req.userId,
-    skillId: skill._id,
-    minutes,
-    note,
-    at
-  });
+    const { minutes, note, at } = req.body;
+    const entry = await TimeEntry.create({
+      userId: req.userId,
+      skillId: skill.id,
+      minutes,
+      note,
+      at
+    });
 
-  await Skill.updateOne({ _id: skill._id }, { $inc: { minutesTotal: minutes } });
+    // Update skill's total minutes
+    await skill.increment("minutesTotal", { by: minutes });
 
-  res.status(201).json(entry);
+    res.status(201).json(entry);
+  } catch (error) {
+    console.error("Add time error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 export const listTimeEntries = async (req, res) => {
-  const match = { userId: req.userId };
-  if (req.query.from || req.query.to) {
-    match.at = {};
-    if (req.query.from) match.at.$gte = new Date(req.query.from);
-    if (req.query.to) match.at.$lte = new Date(req.query.to);
+  try {
+    const where = { userId: req.userId };
+    
+    if (req.query.from || req.query.to) {
+      where.at = {};
+      if (req.query.from) {
+        where.at[Op.gte] = new Date(req.query.from);
+      }
+      if (req.query.to) {
+        where.at[Op.lte] = new Date(req.query.to);
+      }
+    }
+    if (req.query.skillId) {
+      where.skillId = req.query.skillId;
+    }
+
+    const rows = await TimeEntry.findAll({
+      where,
+      include: [
+        {
+          model: Skill,
+          as: "skill",
+          attributes: ["title", "category", "status", "confidence"]
+        }
+      ],
+      order: [["at", "DESC"]]
+    });
+
+    res.json(rows);
+  } catch (error) {
+    console.error("List time entries error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-  if (req.query.skillId) match.skillId = req.query.skillId;
-
-  const rows = await TimeEntry
-    .find(match)
-    .populate({ path: "skillId", select: "title category status confidence" })
-    .sort({ at: -1 });
-
-  res.json(rows);
 };
 
 export const timeSummaryPerSkill = async (req, res) => {
-  const rows = await Skill.aggregate([
-   { $match: { userId: new mongoose.Types.ObjectId(req.userId) } },
-    { $project: {
-        title: 1, category: 1, status: 1, confidence: 1,
-        minutesTotal: 1, startedAt: 1, nextReviewAt: 1, createdAt: 1
-    }},
-    { $sort: { category: 1, title: 1 } }
-  ]);
-  res.json(rows);
+  try {
+    const skills = await Skill.findAll({
+      where: { userId: req.userId },
+      attributes: [
+        "id",
+        "title",
+        "category",
+        "status",
+        "confidence",
+        "minutesTotal",
+        "startedAt",
+        "nextReviewAt",
+        "createdAt"
+      ],
+      order: [
+        ["category", "ASC"],
+        ["title", "ASC"]
+      ]
+    });
+
+    res.json(skills);
+  } catch (error) {
+    console.error("Time summary error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 };

@@ -1,16 +1,63 @@
-import mongoose from "mongoose";
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
+import User from "./User.js";
+import Skill from "./Skill.js";
 
-const TimeEntrySchema = new mongoose.Schema(
-  {
-    userId:  { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    skillId: { type: mongoose.Schema.Types.ObjectId, ref: "Skill", required: true, index: true },
-    minutes: { type: Number, required: true, min: 1 },
-    note:    { type: String, trim: true },
-    at:      { type: Date, default: Date.now, index: true }
+const TimeEntry = sequelize.define("TimeEntry", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  { timestamps: true }
-);
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "users",
+      key: "id"
+    },
+    onDelete: "CASCADE"
+  },
+  skillId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: "skills",
+      key: "id"
+    },
+    onDelete: "CASCADE"
+  },
+  minutes: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1
+    }
+  },
+  note: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  timestamps: true,
+  tableName: "time_entries",
+  indexes: [
+    { fields: ["userId"] },
+    { fields: ["skillId"] },
+    { fields: ["at"] },
+    { fields: ["userId", "skillId", "at"] }
+  ]
+});
 
-TimeEntrySchema.index({ userId: 1, skillId: 1, at: -1 });
+// Define associations
+TimeEntry.belongsTo(User, { foreignKey: "userId", as: "user" });
+TimeEntry.belongsTo(Skill, { foreignKey: "skillId", as: "skill" });
+User.hasMany(TimeEntry, { foreignKey: "userId", as: "timeEntries" });
+Skill.hasMany(TimeEntry, { foreignKey: "skillId", as: "timeEntries" });
 
-export default mongoose.model("TimeEntry", TimeEntrySchema);
+export default TimeEntry;

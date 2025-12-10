@@ -22,7 +22,7 @@ export default function SkillCard({ skill, onAddTime, onEdit, onDelete }) {
       <div className="mt-3 flex gap-2">
         <button className="btn" onClick={()=>onAddTime(skill)}>+ Time</button>
         <button className="btn" onClick={()=>onEdit(skill)}>Edit</button>
-        <button className="btn border-red-300 text-red-600" onClick={()=>onDelete(skill._id)}>Delete</button>
+        <button className="btn border-red-300 text-red-600" onClick={()=>onDelete(skill.id)}>Delete</button>
       </div>
     </div>
   );

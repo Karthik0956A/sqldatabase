@@ -1,36 +1,3 @@
-// import bcrypt from "bcryptjs";
-// import User from "../models/User.js";
-// import { signToken } from "../utils/jwt.js";
-
-// export const register = async (req, res) => {
-//   const { name, email, password } = req.body;
-//   const exists = await User.findOne({ email });
-//   if (exists) return res.status(409).json({ message: "Email already in use" });
-
-//   const passwordHash = await bcrypt.hash(password, 10);
-//   const user = await User.create({ name, email, passwordHash });
-//   const token = signToken({ id: user._id });
-
-//   res.status(201).json({ token, user: { id: user._id, name, email } });
-// };
-
-// export const login = async (req, res) => {
-//   const { email, password } = req.body;
-//   const user = await User.findOne({ email });
-//   if (!user) return res.status(401).json({ message: "Invalid credentials" });
-
-//   const ok = await bcrypt.compare(password, user.passwordHash);
-//   if (!ok) return res.status(401).json({ message: "Invalid credentials" });
-
-//   const token = signToken({ id: user._id });
-//   res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
-// };
-
-// export const me = async (req, res) => {
-//   const u = await User.findById(req.userId).select("_id name email");
-//   res.json(u);
-// };
-
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import { signToken } from "../utils/jwt.js";
@@ -44,18 +11,18 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ where: { email } });
     if (exists) {
       return res.status(409).json({ message: "Email already in use" });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, passwordHash });
-    const token = signToken({ id: user._id });
+    const token = signToken({ id: user.id });
 
     res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -72,7 +39,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -82,11 +49,11 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = signToken({ id: user._id });
+    const token = signToken({ id: user.id });
 
     res.status(200).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -97,7 +64,9 @@ export const login = async (req, res) => {
 // ------------------- Get Logged-in User -------------------
 export const me = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select("_id name email");
+    const user = await User.findByPk(req.userId, {
+      attributes: ["id", "name", "email"]
+    });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
